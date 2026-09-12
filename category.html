@@ -1,14 +1,11 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Category — COOLISM</title>
-<meta property="og:title" content="Shop Coolism Collections" />
-<meta property="og:description" content="Premium streetwear from Karachi." />
-<meta property="og:image" content="images/og-banner.jpg" />
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%230B1A30'/%3E%3Ctext x='50' y='68' font-family='Georgia' font-size='60' font-weight='700' fill='%23F9F8F6' text-anchor='middle'%3EC%3C/text%3E%3C/svg%3E" />
-<link href="https://fonts.googleapis.com/css2?family=Italiana&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Playfair+Display:ital,wght@0,400;0,600;0,700&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Italiana&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Playfair+Display:wght@400;600;700&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body data-page="category">
@@ -24,10 +21,6 @@
       <button class="icon-btn" id="wishlistBtn" aria-label="Wishlist">
         <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
         <span class="badge" id="wishlistCount">0</span>
-      </button>
-      <button class="icon-btn theme-toggle" id="themeToggle" aria-label="Toggle theme">
-        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display:none"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
       </button>
       <button class="btn-ghost" id="accountBtn">Login</button>
       <button class="icon-btn" id="cartBtn" aria-label="Cart">
@@ -214,21 +207,17 @@
         <div class="field" data-field><label>Full Name</label><input id="co-name" type="text" /><span class="msg">Required</span></div>
         <div class="row-2">
           <div class="field" data-field><label>Mobile</label><input id="co-phone" type="tel" /><span class="msg">11 digits</span></div>
-          <div class="field" data-field><label>City</label><input id="co-city" type="text" placeholder="Jaranwala" /><span class="msg">Required</span></div>
+          <div class="field" data-field><label>City</label><input id="co-city" type="text" /><span class="msg">Required</span></div>
         </div>
         <div class="row-2">
-          <div class="field" data-field><label>District</label><input id="co-district" type="text" placeholder="Faisalabad" /><span class="msg">Required</span></div>
+          <div class="field" data-field><label>District</label><input id="co-district" type="text" /><span class="msg">Required</span></div>
           <div class="field" data-field><label>Province</label><select id="co-province"><option value="">Select…</option><option>Sindh</option><option>Punjab</option><option>Khyber Pakhtunkhwa</option><option>Balochistan</option><option>Gilgit-Baltistan</option><option>Azad Kashmir</option><option>Islamabad Capital Territory</option></select><span class="msg">Required</span></div>
         </div>
         <div class="field" data-field><label>Full Address</label><input id="co-address" type="text" /><span class="msg">Required</span></div>
         <div class="checkout-summary">
           <div class="total-row"><span>Subtotal</span><b id="co-subtotal">Rs 0</b></div>
-          <div class="total-row"><span>Shipping (from Jaranwala)</span><b id="co-shipping">Rs 0</b></div>
-          <div class="total-row"><span>Loyalty Discount</span><b id="co-loyalty">−Rs 0</b></div>
+          <div class="total-row"><span>Shipping</span><b id="co-shipping">Rs 0</b></div>
           <div class="total-row co-grand"><span>Total (COD)</span><b id="co-total">Rs 0</b></div>
-        </div>
-        <div class="loyalty-box" id="loyaltyBox" hidden>
-          <label class="loyalty-label"><input type="checkbox" id="useLoyalty" /><span>Use <b id="loyaltyAvail">0</b> points for <b id="loyaltyValue">Rs 0</b> off</span></label>
         </div>
         <button type="submit" class="btn btn-silver" id="placeOrderBtn">Place Order — COD</button>
         <p class="checkout-note" id="checkoutNote"></p>
@@ -242,7 +231,6 @@
     <div class="success-icon">✓</div>
     <h2>Order Placed!</h2>
     <p>Your order <b id="successOrderId">—</b> has been received.</p>
-    <p class="loyalty-earned" id="loyaltyEarned" hidden>You earned <b id="earnedPoints">0</b> loyalty points!</p>
     <a href="profile.html#orders" class="btn btn-silver">View My Orders</a>
   </div>
 </div>
