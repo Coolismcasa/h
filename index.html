@@ -60,49 +60,11 @@
   </div>
 </header>
 
-<!-- SEASONAL BANNER -->
-<div class="seasonal-banner" id="seasonalBanner" hidden>
-  <div class="container">
-    <div class="sb-inner">
-      <span class="sb-icon" id="sbIcon">✦</span>
-      <div class="sb-text">
-        <b id="sbTitle">Winter Drop 2026</b>
-        <span id="sbText">Up to 30% off selected pieces</span>
-      </div>
-      <a href="#shop" class="sb-cta">Shop Now →</a>
-      <button class="sb-close" id="sbClose">✕</button>
-    </div>
-  </div>
-</div>
-
 <section class="hero">
   <div class="hero-ghost">COOLISM</div>
   <div class="container hero-inner">
     <p class="eyebrow">The Premium Wear · Est. Karachi</p>
     <h1 class="slogan">Comfort meets <em>Coolism</em></h1>
-  </div>
-</section>
-
-<section class="trust-strip">
-  <div class="container">
-    <div class="trust-badges">
-      <div class="trust-item">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-        <div><b>100% Secure</b><span>Your data is protected</span></div>
-      </div>
-      <div class="trust-item">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h13l5 5v5h-3"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/><path d="M9 17h6"/></svg>
-        <div><b>Free Shipping</b><span>On orders over Rs 5,000</span></div>
-      </div>
-      <div class="trust-item">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M2 10h20"/></svg>
-        <div><b>Cash on Delivery</b><span>Pay when it arrives</span></div>
-      </div>
-      <div class="trust-item">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
-        <div><b>Easy Returns</b><span>14-day exchange policy</span></div>
-      </div>
-    </div>
   </div>
 </section>
 
@@ -174,7 +136,7 @@
     </div>
     <div class="f-bottom">
       <span>© 2026 Coolism. All rights reserved.</span>
-      <span>Jaranwala · Lahore · Karachi — Prices in PKR</span>
+      <span>Karachi · Lahore · Islamabad — Prices in PKR</span>
     </div>
   </div>
 </footer>
@@ -338,10 +300,10 @@
         <div class="field" data-field><label>Full Name</label><input id="co-name" type="text" placeholder="Ali Raza" /><span class="msg">Required</span></div>
         <div class="row-2">
           <div class="field" data-field><label>Mobile Number</label><input id="co-phone" type="tel" placeholder="03XX XXXXXXX" /><span class="msg">11 digits</span></div>
-          <div class="field" data-field><label>City</label><input id="co-city" type="text" placeholder="Jaranwala" /><span class="msg">Required</span></div>
+          <div class="field" data-field><label>City</label><input id="co-city" type="text" placeholder="Karachi" /><span class="msg">Required</span></div>
         </div>
         <div class="row-2">
-          <div class="field" data-field><label>District</label><input id="co-district" type="text" placeholder="Faisalabad" /><span class="msg">Required</span></div>
+          <div class="field" data-field><label>District</label><input id="co-district" type="text" placeholder="Karachi Central" /><span class="msg">Required</span></div>
           <div class="field" data-field>
             <label>Province</label>
             <select id="co-province"><option value="">Select province…</option><option>Sindh</option><option>Punjab</option><option>Khyber Pakhtunkhwa</option><option>Balochistan</option><option>Gilgit-Baltistan</option><option>Azad Kashmir</option><option>Islamabad Capital Territory</option></select>
@@ -351,15 +313,8 @@
         <div class="field" data-field><label>Full Address</label><input id="co-address" type="text" placeholder="House 12, Street 5" /><span class="msg">Required</span></div>
         <div class="checkout-summary">
           <div class="total-row"><span>Subtotal</span><b id="co-subtotal">Rs 0</b></div>
-          <div class="total-row"><span>Shipping (from Jaranwala)</span><b id="co-shipping">Rs 0</b></div>
-          <div class="total-row"><span>Loyalty Discount</span><b id="co-loyalty">−Rs 0</b></div>
+          <div class="total-row"><span>Shipping</span><b id="co-shipping">Rs 0</b></div>
           <div class="total-row co-grand"><span>Total (COD)</span><b id="co-total">Rs 0</b></div>
-        </div>
-        <div class="loyalty-box" id="loyaltyBox" hidden>
-          <label class="loyalty-label">
-            <input type="checkbox" id="useLoyalty" />
-            <span>Use <b id="loyaltyAvail">0</b> points for <b id="loyaltyValue">Rs 0</b> off</span>
-          </label>
         </div>
         <button type="submit" class="btn btn-silver" id="placeOrderBtn">Place Order — Cash on Delivery</button>
         <p class="checkout-note" id="checkoutNote">You'll be asked to sign in to confirm your order.</p>
@@ -373,7 +328,6 @@
     <div class="success-icon">✓</div>
     <h2>Order Placed!</h2>
     <p>Thank you. Your order <b id="successOrderId">—</b> has been received.</p>
-    <p class="loyalty-earned" id="loyaltyEarned" hidden>You earned <b id="earnedPoints">0</b> loyalty points!</p>
     <a href="profile.html#orders" class="btn btn-silver">View My Orders</a>
   </div>
 </div>
