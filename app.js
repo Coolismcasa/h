@@ -14,7 +14,7 @@ const db = firebase.firestore();
 let PRODUCTS=[], CATEGORIES={}, cart=[], wishlist=[], allUsers=[], allOrders=[];
 let currentDetail={product:null,size:null,color:null,qty:1,images:[]};
 let currentImageIndex=0, currentReviewProduct=null, currentOrderId=null, selectedStar=0;
-let currentFilter='all', currentSort='featured', useLoyaltyPoints=false;
+let currentFilter='all', currentSort='featured';
 
 const FALLBACK_CATS={
   shirts:{label:'Shirts',sub:'Heavyweight tees & crisp cotton',img:'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=800&q=80'},
@@ -33,9 +33,6 @@ const FALLBACK_PRODUCTS=[
   {id:'p8',name:'Fleece-Lined Zip Hoodie',cat:'hoodies',price:7290,oldPrice:null,tag:'New',images:['https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?w=700&q=80'],desc:'Full-zip hoodie, double-lined hood, brushed interior.',sizes:['S','M','L','XL'],colors:[{name:'Navy',hex:'#131F3A'},{name:'Grey',hex:'#8A8A8A'}],fabric:'Cotton-poly blend',care:'Machine wash cold',sku:'CLM-HD-002',inStock:true,stock:35,lowStock:5}
 ];
 
-const SHIPPING_FROM={city:'Jaranwala',district:'Faisalabad',province:'Punjab'};
-const SHIPPING_RATES={sameCity:150,sameDistrict:200,sameProvince:250,other:300,freeThreshold:5000};
-
 const money=n=>'Rs '+Number(n||0).toLocaleString('en-PK');
 const getCat=k=>CATEGORIES[k]||FALLBACK_CATS[k]||{label:k,sub:'',img:''};
 const isEmail=v=>/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim());
@@ -47,23 +44,6 @@ function clearErrors(form){if(form)form.querySelectorAll('[data-field]').forEach
 function toast(msg){const el=document.getElementById('toast');if(!el)return;document.getElementById('toastMsg').textContent=msg;el.classList.add('show');clearTimeout(window._toastTimer);window._toastTimer=setTimeout(()=>el.classList.remove('show'),3200);}
 function productVisualHTML(p,cls='card-placeholder'){const img=(p.images&&p.images[0])||p.img;if(img)return `<img src="${img}" alt="${p.name}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'"><div class="${cls}" style="display:none;background:linear-gradient(140deg,#333,#111)"><span class="letter">${p.name.charAt(0)}</span></div>`;return `<div class="${cls}" style="background:linear-gradient(140deg,#333,#111)"><span class="letter">${p.name.charAt(0)}</span></div>`;}
 function cartVisualHTML(p){const img=(p.images&&p.images[0])||p.img;if(img)return `<img src="${img}" alt="${p.name}" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'"><div class="mini-letter" style="display:none;background:#333">${p.name.charAt(0)}</div>`;return `<div class="mini-letter" style="background:#333">${p.name.charAt(0)}</div>`;}
-
-/* THEME */
-(function(){const saved=localStorage.getItem('coolism_theme')||'dark';document.documentElement.setAttribute('data-theme',saved);
-document.addEventListener('click',e=>{if(e.target.closest('#themeToggle')){const cur=document.documentElement.getAttribute('data-theme')||'dark';const next=cur==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',next);localStorage.setItem('coolism_theme',next);toast(next==='dark'?'🌙 Dark mode':'☀️ Light mode');}});})();
-
-/* SEASONAL BANNER */
-(function(){const banner=document.getElementById('seasonalBanner');if(!banner)return;if(localStorage.getItem('coolism_sb_dismissed')==='1')return;
-const m=new Date().getMonth();let t=null;
-if(m>=11||m<=1)t={icon:'❄️',title:'Winter Drop 2026',text:'Up to 30% off selected pieces'};
-else if(m>=2&&m<=3)t={icon:'🌸',title:'Spring Collection',text:'New arrivals just landed'};
-else if(m>=4&&m<=6)t={icon:'☀️',title:'Summer Essentials',text:'Light linens & breathable cotton'};
-else if(m>=7&&m<=8)t={icon:'🌧️',title:'Monsoon Edit',text:'Comfort meets Coolism this season'};
-else t={icon:'🍂',title:'Autumn Drop',text:'Rich tones for cooler days'};
-const i=document.getElementById('sbIcon'),tt=document.getElementById('sbTitle'),tx=document.getElementById('sbText');
-if(i)i.textContent=t.icon;if(tt)tt.textContent=t.title;if(tx)tx.textContent=t.text;
-banner.hidden=false;
-const c=document.getElementById('sbClose');if(c)c.addEventListener('click',()=>{banner.hidden=true;localStorage.setItem('coolism_sb_dismissed','1');});})();
 
 /* LOAD CATALOG */
 async function loadCatalog(){
@@ -78,10 +58,10 @@ function renderCategoryTiles(){const g=document.getElementById('catGrid');if(!g)
 function renderFooterCats(){const ul=document.getElementById('footerCats');if(!ul)return;ul.innerHTML=Object.keys(CATEGORIES).map(k=>`<li><a href="category.html?cat=${k}">${CATEGORIES[k].label}</a></li>`).join('');}
 function renderFilterChips(){const el=document.getElementById('filters');if(!el)return;el.innerHTML=`<button class="chip active" data-filter="all">All</button>`+Object.keys(CATEGORIES).map(k=>`<button class="chip" data-filter="${k}">${CATEGORIES[k].label}</button>`).join('');}
 
-/* SORT & RENDER PRODUCTS */
+/* PRODUCTS */
 function sortProducts(list,mode){const a=[...list];if(mode==='price-asc')a.sort((x,y)=>x.price-y.price);else if(mode==='price-desc')a.sort((x,y)=>y.price-x.price);else if(mode==='newest')a.sort((x,y)=>(y._ts||0)-(x._ts||0));return a;}
 function productCardHTML(p){const w=wishlist.includes(p.id)?'wished':'';const oos=p.stock!==undefined&&p.stock<=0;const oc=(!p.inStock||oos)?'out-of-stock':'';return `<article class="card ${oc}" data-id="${p.id}"><div class="card-media">${p.tag?`<span class="tag">${p.tag}</span>`:''}${productVisualHTML(p)}<button class="wish-toggle ${w}" data-wish="${p.id}"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></button><button class="quick-add" data-quick="${p.id}" ${(!p.inStock||oos)?'disabled':''}>${(!p.inStock||oos)?'Out of Stock':'Add to Bag'}</button></div><div class="card-body"><span class="cat">${getCat(p.cat).label}</span><h3>${p.name}</h3><div class="price"><span class="now">${money(p.price)}</span>${p.oldPrice?`<span class="was">${money(p.oldPrice)}</span>`:''}</div></div></article>`;}
-function renderProducts(filter='all',sortMode='featured'){const g=document.getElementById('productGrid');if(!g)return;let list=filter==='all'?PRODUCTS:PRODUCTS.filter(p=>p.cat===filter);list=sortProducts(list,sortMode);if(!list.length){g.innerHTML=`<div class="empty-state"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg><h3>No products found</h3><p>Try a different category.</p></div>`;return;}g.innerHTML=list.map((p,i)=>{const html=productCardHTML(p);return html.replace('class="card',`style="animation-delay:${Math.min(i*0.05,0.5)}s" class="card`);}).join('');}
+function renderProducts(filter='all',sortMode='featured'){const g=document.getElementById('productGrid');if(!g)return;let list=filter==='all'?PRODUCTS:PRODUCTS.filter(p=>p.cat===filter);list=sortProducts(list,sortMode);if(!list.length){g.innerHTML=`<div class="empty-state"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg><h3>No products found</h3><p>Try a different category.</p></div>`;return;}g.innerHTML=list.map(productCardHTML).join('');}
 
 /* WISHLIST */
 function loadLocalWishlist(){try{wishlist=JSON.parse(localStorage.getItem('coolism_wishlist')||'[]');}catch(e){wishlist=[];}updateWishlistBadge();}
@@ -94,7 +74,7 @@ function renderWishlistDrawer(){const body=document.getElementById('wishlistBody
 function loadLocalCart(){try{cart=JSON.parse(localStorage.getItem('coolism_cart')||'[]');}catch(e){cart=[];}renderCart();}
 function saveCart(){try{localStorage.setItem('coolism_cart',JSON.stringify(cart));}catch(e){}}
 function addToCart(product,size,color,qty){if(!product.inStock||(product.stock!==undefined&&product.stock<=0))return toast('Out of stock');const key=`${product.id}|${size}|${color}`;const e=cart.find(i=>lineKey(i)===key);if(e)e.qty+=qty;else cart.push({id:product.id,name:product.name,price:product.price,images:product.images,size,color,qty});saveCart();renderCart();toast(`${product.name} added to bag`);}
-function renderCart(){const body=document.getElementById('cartBody');if(!body)return;const c=cart.reduce((s,i)=>s+i.qty,0),t=cart.reduce((s,i)=>s+i.price*i.qty,0);const cnt=document.getElementById('cartCount'),tot=document.getElementById('cartTotal');if(cnt){cnt.textContent=c;cnt.classList.toggle('show',c>0);}if(tot)tot.textContent=money(t);const sf=document.getElementById('shipFill'),sm=document.getElementById('shipMsg'),sp=document.getElementById('shipProgress');if(sf&&sm){const free=SHIPPING_RATES.freeThreshold;sf.style.width=Math.min(100,(t/free)*100)+'%';if(t>=free){sm.textContent='🎉 You got free shipping!';if(sp)sp.classList.add('free');}else{sm.textContent=`Add ${money(free-t)} more for free shipping`;if(sp)sp.classList.remove('free');}}if(!cart.length){body.innerHTML=`<div class="cart-empty"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg><p>Your bag is empty.</p><a href="index.html#shop" class="btn btn-line" style="margin-top:16px">Start Shopping</a></div>`;return;}body.innerHTML=cart.map(i=>`<div class="cart-item"><div class="ci-thumb">${cartVisualHTML(i)}</div><div class="ci-info"><h4>${i.name}</h4><div class="ci-variant">${i.size} · ${i.color}</div><div class="p">${money(i.price)} × ${i.qty}</div><div class="ci-controls"><div class="ci-qty"><button data-cart-dec="${lineKey(i)}">−</button><span>${i.qty}</span><button data-cart-inc="${lineKey(i)}">+</button></div><button class="ci-remove" data-cart-remove="${lineKey(i)}">Remove</button></div></div></div>`).join('');}
+function renderCart(){const body=document.getElementById('cartBody');if(!body)return;const c=cart.reduce((s,i)=>s+i.qty,0),t=cart.reduce((s,i)=>s+i.price*i.qty,0);const cnt=document.getElementById('cartCount'),tot=document.getElementById('cartTotal');if(cnt){cnt.textContent=c;cnt.classList.toggle('show',c>0);}if(tot)tot.textContent=money(t);const sf=document.getElementById('shipFill'),sm=document.getElementById('shipMsg'),sp=document.getElementById('shipProgress');if(sf&&sm){const free=5000;sf.style.width=Math.min(100,(t/free)*100)+'%';if(t>=free){sm.textContent='🎉 You got free shipping!';if(sp)sp.classList.add('free');}else{sm.textContent=`Add ${money(free-t)} more for free shipping`;if(sp)sp.classList.remove('free');}}if(!cart.length){body.innerHTML=`<div class="cart-empty"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg><p>Your bag is empty.</p><a href="index.html#shop" class="btn btn-line" style="margin-top:16px">Start Shopping</a></div>`;return;}body.innerHTML=cart.map(i=>`<div class="cart-item"><div class="ci-thumb">${cartVisualHTML(i)}</div><div class="ci-info"><h4>${i.name}</h4><div class="ci-variant">${i.size} · ${i.color}</div><div class="p">${money(i.price)} × ${i.qty}</div><div class="ci-controls"><div class="ci-qty"><button data-cart-dec="${lineKey(i)}">−</button><span>${i.qty}</span><button data-cart-inc="${lineKey(i)}">+</button></div><button class="ci-remove" data-cart-remove="${lineKey(i)}">Remove</button></div></div></div>`).join('');}
 
 /* DRAWERS */
 function openCart(){document.getElementById('cartDrawer').classList.add('open');document.getElementById('overlay').classList.add('show');document.body.style.overflow='hidden';}
@@ -136,60 +116,29 @@ function performSearch(q){const r=document.getElementById('searchResults');if(!r
 function openAuth(tab='login'){document.getElementById('authModal').classList.add('show');document.body.style.overflow='hidden';switchTab(tab);}
 function closeAuth(){document.getElementById('authModal').classList.remove('show');document.body.style.overflow='';clearErrors(document.getElementById('loginForm'));clearErrors(document.getElementById('signupForm'));}
 function switchTab(tab){document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));const l=document.getElementById('loginForm'),s=document.getElementById('signupForm');if(l)l.hidden=tab!=='login';if(s)s.hidden=tab!=='signup';}
-async function saveUserToFirestore(user,extra={}){try{const ref=db.collection('users').doc(user.uid);const snap=await ref.get();const base={uid:user.uid,email:user.email||'',displayName:user.displayName||'',photoURL:user.photoURL||'',provider:(user.providerData[0]&&user.providerData[0].providerId)||'password',emailVerified:user.emailVerified,lastLogin:firebase.firestore.FieldValue.serverTimestamp()};if(!snap.exists){await ref.set({...base,firstName:extra.firstName||'',lastName:extra.lastName||'',fullName:extra.fullName||'',phone:extra.phone||'',address:'',city:'',district:'',province:'',loyaltyPoints:0,createdAt:firebase.firestore.FieldValue.serverTimestamp()});}else await ref.update(base);}catch(e){console.error(e);}}
+async function saveUserToFirestore(user,extra={}){try{const ref=db.collection('users').doc(user.uid);const snap=await ref.get();const base={uid:user.uid,email:user.email||'',displayName:user.displayName||'',photoURL:user.photoURL||'',provider:(user.providerData[0]&&user.providerData[0].providerId)||'password',emailVerified:user.emailVerified,lastLogin:firebase.firestore.FieldValue.serverTimestamp()};if(!snap.exists){await ref.set({...base,firstName:extra.firstName||'',lastName:extra.lastName||'',fullName:extra.fullName||'',phone:extra.phone||'',address:'',city:'',district:'',province:'',createdAt:firebase.firestore.FieldValue.serverTimestamp()});}else await ref.update(base);}catch(e){console.error(e);}}
 function handleAuthError(err){const c=err.code||'';const m={'auth/user-not-found':'No account found with this email.','auth/wrong-password':'Incorrect password.','auth/invalid-credential':'Incorrect email or password.','auth/invalid-email':'Invalid email address.','auth/email-already-in-use':'This email is already registered.','auth/weak-password':'Password too weak.','auth/too-many-requests':'Too many attempts. Try later.','auth/network-request-failed':'Network error.','auth/operation-not-allowed':'Sign-in method not enabled.','auth/unauthorized-domain':'Domain not authorized.'};toast(m[c]||'Something went wrong.');console.error(err);}
-
-/* SHIPPING CALC */
-function calcShipping(subtotal,city,district,province){
-  if(subtotal>=SHIPPING_RATES.freeThreshold)return 0;
-  const c=(city||'').toLowerCase().trim();
-  const d=(district||'').toLowerCase().trim();
-  const p=(province||'').toLowerCase().trim();
-  if(c===SHIPPING_FROM.city.toLowerCase())return SHIPPING_RATES.sameCity;
-  if(d===SHIPPING_FROM.district.toLowerCase()||c==='faisalabad')return SHIPPING_RATES.sameDistrict;
-  if(p===SHIPPING_FROM.province.toLowerCase())return SHIPPING_RATES.sameProvince;
-  return SHIPPING_RATES.other;
-}
-
-/* LOYALTY */
-function calcLoyaltyDiscount(points){return Math.floor(points/10);}
 
 /* CHECKOUT */
 function openCheckout(){const m=document.getElementById('checkoutModal');if(!m)return;const u=auth.currentUser;
-if(u){db.collection('users').doc(u.uid).get().then(snap=>{if(snap.exists){const d=snap.data();currentUserDoc=d;const set=(id,v)=>{const el=document.getElementById(id);if(el&&v)el.value=v;};set('co-name',d.fullName||`${d.firstName||''} ${d.lastName||''}`.trim());set('co-phone',d.phone);set('co-address',d.address);set('co-city',d.city||SHIPPING_FROM.city);set('co-district',d.district||SHIPPING_FROM.district);set('co-province',d.province||SHIPPING_FROM.province);
-const lb=document.getElementById('loyaltyBox');if(lb){const pts=d.loyaltyPoints||0;if(pts>=100){lb.hidden=false;document.getElementById('loyaltyAvail').textContent=pts;const disc=calcLoyaltyDiscount(pts);document.getElementById('loyaltyValue').textContent=money(disc);}else lb.hidden=true;}
-}}).catch(()=>{});}else{const c=document.getElementById('co-city');if(c&&!c.value)c.value=SHIPPING_FROM.city;const d=document.getElementById('co-district');if(d&&!d.value)d.value=SHIPPING_FROM.district;const p=document.getElementById('co-province');if(p&&!p.value)p.value=SHIPPING_FROM.province;}
-updateCheckoutSummary();const n=document.getElementById('checkoutNote');if(n)n.textContent=u?'Your order will be placed as Cash on Delivery.':'You\'ll be asked to sign in to confirm.';m.classList.add('show');document.body.style.overflow='hidden';closeCart();}
-function updateCheckoutSummary(){const subtotal=cart.reduce((a,i)=>a+i.price*i.qty,0);const city=document.getElementById('co-city')?.value||SHIPPING_FROM.city;const district=document.getElementById('co-district')?.value||SHIPPING_FROM.district;const province=document.getElementById('co-province')?.value||SHIPPING_FROM.province;const ship=calcShipping(subtotal,city,district,province);
-let loyaltyDisc=0;if(useLoyaltyPoints&&currentUserDoc){const pts=currentUserDoc.loyaltyPoints||0;loyaltyDisc=Math.min(calcLoyaltyDiscount(pts),subtotal);}
-const total=Math.max(0,subtotal+ship-loyaltyDisc);
-const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
-set('co-subtotal',money(subtotal));
-set('co-shipping',ship===0?'Free':money(ship));
-set('co-loyalty',loyaltyDisc>0?`−${money(loyaltyDisc)}`:'−Rs 0');
-set('co-total',money(total));}
+if(u){db.collection('users').doc(u.uid).get().then(snap=>{if(snap.exists){const d=snap.data();const set=(id,v)=>{const el=document.getElementById(id);if(el&&v)el.value=v;};set('co-name',d.fullName||`${d.firstName||''} ${d.lastName||''}`.trim());set('co-phone',d.phone);set('co-address',d.address);set('co-city',d.city);set('co-district',d.district);set('co-province',d.province);}}).catch(()=>{});}
+updateCheckoutSummary();const n=document.getElementById('checkoutNote');if(n)n.textContent=u?'Your order will be placed as Cash on Delivery.':"You'll be asked to sign in to confirm.";m.classList.add('show');document.body.style.overflow='hidden';closeCart();}
+function updateCheckoutSummary(){const subtotal=cart.reduce((a,i)=>a+i.price*i.qty,0);const shipping=subtotal>5000?0:250;const total=subtotal+shipping;const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};set('co-subtotal',money(subtotal));set('co-shipping',shipping===0?'Free':money(shipping));set('co-total',money(total));}
 function closeCheckout(){document.getElementById('checkoutModal').classList.remove('show');document.body.style.overflow='';}
 function closeSuccess(){document.getElementById('successModal').classList.remove('show');}
 async function placeOrder(user,formData){
   const subtotal=cart.reduce((a,i)=>a+i.price*i.qty,0);
-  const ship=calcShipping(subtotal,formData.city,formData.district,formData.province);
-  let loyaltyDisc=0,loyaltyUsed=0;
-  if(useLoyaltyPoints&&currentUserDoc){const pts=currentUserDoc.loyaltyPoints||0;const disc=Math.min(calcLoyaltyDiscount(pts),subtotal);if(disc>0){loyaltyDisc=disc;loyaltyUsed=disc*10;}}
-  const total=Math.max(0,subtotal+ship-loyaltyDisc);
-  const earned=Math.floor(total/100);
+  const shipping=subtotal>5000?0:250;
+  const total=subtotal+shipping;
   const orderId='ORD-'+Date.now().toString().slice(-8);
-  const order={orderId,uid:user.uid,email:user.email||'',fullName:formData.fullName,phone:formData.phone,address:formData.address,city:formData.city,district:formData.district,province:formData.province,items:cart.map(i=>({id:i.id,name:i.name,size:i.size,color:i.color,qty:i.qty,price:i.price})),itemCount:cart.reduce((a,i)=>a+i.qty,0),subtotal,shipping:ship,loyaltyDiscount:loyaltyDisc,loyaltyUsed,total,status:'pending',paymentMethod:'Cash on Delivery',createdAt:firebase.firestore.FieldValue.serverTimestamp()};
+  const order={orderId,uid:user.uid,email:user.email||'',fullName:formData.fullName,phone:formData.phone,address:formData.address,city:formData.city,district:formData.district,province:formData.province,items:cart.map(i=>({id:i.id,name:i.name,size:i.size,color:i.color,qty:i.qty,price:i.price})),itemCount:cart.reduce((a,i)=>a+i.qty,0),subtotal,shipping,total,status:'pending',paymentMethod:'Cash on Delivery',createdAt:firebase.firestore.FieldValue.serverTimestamp()};
   try{
     await db.collection('orders').add(order);
-    const userUpdates={fullName:formData.fullName,firstName:formData.fullName.split(' ')[0]||'',lastName:formData.fullName.split(' ').slice(1).join(' ')||'',phone:formData.phone,address:formData.address,city:formData.city,district:formData.district,province:formData.province};
-    const curPts=currentUserDoc?.loyaltyPoints||0;
-    userUpdates.loyaltyPoints=Math.max(0,curPts-loyaltyUsed)+earned;
-    await db.collection('users').doc(user.uid).set(userUpdates,{merge:true});
+    await db.collection('users').doc(user.uid).set({fullName:formData.fullName,firstName:formData.fullName.split(' ')[0]||'',lastName:formData.fullName.split(' ').slice(1).join(' ')||'',phone:formData.phone,address:formData.address,city:formData.city,district:formData.district,province:formData.province},{merge:true});
     for(const item of cart){try{const ref=db.collection('products').doc(item.id);const sn=await ref.get();if(sn.exists){await ref.update({stock:Math.max(0,(sn.data().stock??0)-item.qty)});}}catch(e){}}
-    cart=[];saveCart();renderCart();useLoyaltyPoints=false;try{localStorage.removeItem('coolism_pending');}catch(e){}
+    cart=[];saveCart();renderCart();try{localStorage.removeItem('coolism_pending');}catch(e){}
     closeCheckout();
     const sid=document.getElementById('successOrderId');if(sid)sid.textContent=orderId;
-    const le=document.getElementById('loyaltyEarned');if(le&&earned>0){le.hidden=false;document.getElementById('earnedPoints').textContent=earned;}
     document.getElementById('successModal').classList.add('show');
     setTimeout(closeSuccess,6000);
     toast('Order placed successfully!');
@@ -198,12 +147,11 @@ async function placeOrder(user,formData){
 
 /* PROFILE */
 async function loadProfile(user){const noAuth=document.getElementById('noAuth');if(!user){if(noAuth)noAuth.hidden=false;return;}if(noAuth)noAuth.hidden=true;
-try{const snap=await db.collection('users').doc(user.uid).get();const d=snap.exists?snap.data():{};currentUserDoc=d;
+try{const snap=await db.collection('users').doc(user.uid).get();const d=snap.exists?snap.data():{};
 const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v||'—';};
 set('profileName',`Hello, ${d.firstName||(user.displayName&&user.displayName.split(' ')[0])||'there'}`);
 set('pf-name',`${d.firstName||''} ${d.lastName||''}`.trim()||'—');set('pf-email',user.email);set('pf-phone',d.phone);set('pf-provider',d.provider||'password');set('pf-created',d.createdAt?.toDate?d.createdAt.toDate().toLocaleDateString():'—');
 set('pf-address',d.address);set('pf-city',d.city);set('pf-district',d.district);set('pf-province',d.province);
-const lp=document.getElementById('loyaltyPoints');if(lp)lp.textContent=d.loyaltyPoints||0;
 const v=(id,val)=>{const el=document.getElementById(id);if(el)el.value=val||'';};
 v('ed-first',d.firstName);v('ed-last',d.lastName);v('ed-phone',d.phone);v('ed-address',d.address);v('ed-city',d.city);v('ed-district',d.district);v('ed-province',d.province);
 }catch(e){console.error(e);}
@@ -216,12 +164,12 @@ c.querySelectorAll('[data-view-order]').forEach(b=>b.addEventListener('click',()
 function renderProfileWishlist(){const g=document.getElementById('wishlistGrid');if(!g)return;const items=PRODUCTS.filter(p=>wishlist.includes(p.id));if(!items.length){g.innerHTML=`<div class="empty-state" style="grid-column:1/-1"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg><h3>Your wishlist is empty</h3><p>Heart products you love to save them here.</p></div>`;return;}g.innerHTML=items.map(productCardHTML).join('');}
 function showOrderDetail(id,orders){const o=orders.find(x=>x.id===id);if(!o)return;const m=document.getElementById('orderDetailModal');if(!m)return;document.getElementById('odTitle').textContent=`Order ${o.orderId}`;document.getElementById('odSub').textContent=o.createdAt?.toDate?o.createdAt.toDate().toLocaleString():'';
 const items=(o.items||[]).map(it=>`<div class="order-item"><div><div class="nm">${it.name}</div><div class="vr">${it.size} · ${it.color}</div><div class="qt">Qty: ${it.qty}</div></div><div><b>${money(it.price*it.qty)}</b></div></div>`).join('');
-document.getElementById('odBody').innerHTML=`<div class="order-detail-block"><h4>Shipping Address</h4><div class="row"><b>Name</b><span>${o.fullName||'—'}</span></div><div class="row"><b>Phone</b><span>${o.phone||'—'}</span></div><div class="row"><b>Address</b><span>${o.address||'—'}</span></div><div class="row"><b>City</b><span>${o.city||'—'}</span></div><div class="row"><b>District</b><span>${o.district||'—'}</span></div><div class="row"><b>Province</b><span>${o.province||'—'}</span></div></div><div class="order-detail-block"><h4>Items</h4><div class="order-items-list">${items}</div></div><div class="order-detail-block"><h4>Payment</h4><div class="row"><b>Subtotal</b><span>${money(o.subtotal)}</span></div><div class="row"><b>Shipping</b><span>${o.shipping===0?'Free':money(o.shipping)}</span></div>${o.loyaltyDiscount?`<div class="row"><b>Loyalty</b><span style="color:#D4A017">−${money(o.loyaltyDiscount)}</span></div>`:''}<div class="row"><b>Total</b><span><b>${money(o.total)}</b></span></div><div class="row"><b>Method</b><span>Cash on Delivery</span></div><div class="row"><b>Status</b><span>${o.status||'pending'}</span></div></div>`;
+document.getElementById('odBody').innerHTML=`<div class="order-detail-block"><h4>Shipping Address</h4><div class="row"><b>Name</b><span>${o.fullName||'—'}</span></div><div class="row"><b>Phone</b><span>${o.phone||'—'}</span></div><div class="row"><b>Address</b><span>${o.address||'—'}</span></div><div class="row"><b>City</b><span>${o.city||'—'}</span></div><div class="row"><b>District</b><span>${o.district||'—'}</span></div><div class="row"><b>Province</b><span>${o.province||'—'}</span></div></div><div class="order-detail-block"><h4>Items</h4><div class="order-items-list">${items}</div></div><div class="order-detail-block"><h4>Payment</h4><div class="row"><b>Subtotal</b><span>${money(o.subtotal)}</span></div><div class="row"><b>Shipping</b><span>${o.shipping===0?'Free':money(o.shipping)}</span></div><div class="row"><b>Total</b><span><b>${money(o.total)}</b></span></div><div class="row"><b>Method</b><span>Cash on Delivery</span></div><div class="row"><b>Status</b><span>${o.status||'pending'}</span></div></div>`;
 m.classList.add('show');}
 
 /* ADMIN PRODUCTS */
-async function loadProducts(){const t=document.getElementById('productsTbody');if(!t)return;t.innerHTML=`<tr><td colspan="9" class="table-empty">Loading products…</td></tr>`;try{const s=await db.collection('products').get();PRODUCTS=s.docs.map(doc=>{const d=doc.data();return{id:doc.id,name:d.name||'',cat:d.cat||'shirts',price:Number(d.price)||0,oldPrice:d.oldPrice?Number(d.oldPrice):null,tag:d.tag||null,images:Array.isArray(d.images)?d.images:(d.img?[d.img]:[]),desc:d.desc||'',sizes:Array.isArray(d.sizes)?d.sizes:['S','M','L','XL'],colors:Array.isArray(d.colors)?d.colors:[{name:'Navy',hex:'#0B1A30'}],fabric:d.fabric||'',care:d.care||'',sku:d.sku||'',inStock:d.inStock!==false,stock:d.stock??50,lowStock:d.lowStock??5,_ts:d.createdAt?.seconds||0};});if(!PRODUCTS.length)PRODUCTS=[...FALLBACK_PRODUCTS];renderProductsTable(PRODUCTS);updateAdminStats();}catch(e){t.innerHTML=`<tr><td colspan="9" class="table-empty">Error: ${e.message}</td></tr>`;}}
-function renderProductsTable(list){const t=document.getElementById('productsTbody');if(!t)return;if(!list.length){t.innerHTML=`<tr><td colspan="9" class="table-empty">No products yet.</td></tr>`;return;}t.innerHTML=list.map((p,i)=>{const th=(p.images&&p.images[0])?`<img src="${p.images[0]}" class="product-thumb" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'"><div class="product-thumb-ph" style="display:none">${p.name.charAt(0)}</div>`:`<div class="product-thumb-ph">${p.name.charAt(0)}</div>`;const sn=p.stock??0,ls=p.lowStock??5;const sc=sn===0?'badge-no':(sn<=ls?'badge-info':'badge-yes');const sl=sn===0?'Out':`${sn} left`;const st=p.inStock!==false?'<span class="badge-yes">Active</span>':'<span class="badge-no">Hidden</span>';return `<tr><td>${i+1}</td><td>${th}</td><td><b>${p.name}</b></td><td>${getCat(p.cat).label}</td><td><b>${money(p.price)}</b></td><td>${p.sku||'—'}</td><td><span class="${sc}">${sl}</span></td><td>${st}</td><td><button class="action-btn edit" data-edit-product="${p.id}">Edit</button><button class="action-btn delete" data-delete-product="${p.id}">Delete</button></td></tr>`;}).join('');
+async function loadProducts(){const t=document.getElementById('productsTbody');if(!t)return;t.innerHTML=`<tr><td colspan="8" class="table-empty">Loading products…</td></tr>`;try{const s=await db.collection('products').get();PRODUCTS=s.docs.map(doc=>{const d=doc.data();return{id:doc.id,name:d.name||'',cat:d.cat||'shirts',price:Number(d.price)||0,oldPrice:d.oldPrice?Number(d.oldPrice):null,tag:d.tag||null,images:Array.isArray(d.images)?d.images:(d.img?[d.img]:[]),desc:d.desc||'',sizes:Array.isArray(d.sizes)?d.sizes:['S','M','L','XL'],colors:Array.isArray(d.colors)?d.colors:[{name:'Navy',hex:'#0B1A30'}],fabric:d.fabric||'',care:d.care||'',sku:d.sku||'',inStock:d.inStock!==false,stock:d.stock??50,lowStock:d.lowStock??5,_ts:d.createdAt?.seconds||0};});if(!PRODUCTS.length)PRODUCTS=[...FALLBACK_PRODUCTS];renderProductsTable(PRODUCTS);updateAdminStats();}catch(e){t.innerHTML=`<tr><td colspan="8" class="table-empty">Error: ${e.message}</td></tr>`;}}
+function renderProductsTable(list){const t=document.getElementById('productsTbody');if(!t)return;if(!list.length){t.innerHTML=`<tr><td colspan="8" class="table-empty">No products yet.</td></tr>`;return;}t.innerHTML=list.map((p,i)=>{const th=(p.images&&p.images[0])?`<img src="${p.images[0]}" class="product-thumb" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'"><div class="product-thumb-ph" style="display:none">${p.name.charAt(0)}</div>`:`<div class="product-thumb-ph">${p.name.charAt(0)}</div>`;const sn=p.stock??0,ls=p.lowStock??5;const sc=sn===0?'badge-no':(sn<=ls?'badge-info':'badge-yes');const sl=sn===0?'Out':`${sn} left`;return `<tr><td>${i+1}</td><td>${th}</td><td><b>${p.name}</b></td><td>${getCat(p.cat).label}</td><td><b>${money(p.price)}</b></td><td>${p.sku||'—'}</td><td><span class="${sc}">${sl}</span></td><td><button class="action-btn edit" data-edit-product="${p.id}">Edit</button><button class="action-btn delete" data-delete-product="${p.id}">Delete</button></td></tr>`;}).join('');
 t.querySelectorAll('[data-edit-product]').forEach(b=>b.addEventListener('click',()=>openProductForm(b.dataset.editProduct)));
 t.querySelectorAll('[data-delete-product]').forEach(b=>b.addEventListener('click',async()=>{const prod=PRODUCTS.find(p=>p.id===b.dataset.deleteProduct);if(!confirm(`Delete "${prod?.name||'this'}"?`))return;try{await db.collection('products').doc(b.dataset.deleteProduct).delete();toast('Product deleted');loadProducts();}catch(e){toast('Could not delete');}}));}
 function fillCategoryDropdown(){const s=document.getElementById('p-category');if(!s)return;const c=s.value;const keys=Object.keys(CATEGORIES);if(!keys.length){s.innerHTML=`<option value="">⚠️ No categories</option>`;return;}s.innerHTML=`<option value="">Select category…</option>`+keys.map(k=>`<option value="${k}">${CATEGORIES[k].label}</option>`).join('');if(c)s.value=c;}
@@ -248,7 +196,7 @@ function renderOrdersTable(list){const t=document.getElementById('ordersTbody');
 t.querySelectorAll('[data-view-order]').forEach(b=>b.addEventListener('click',()=>showAdminOrder(b.dataset.viewOrder)));}
 function showAdminOrder(orderId){const o=allOrders.find(x=>x.id===orderId);if(!o)return;const m=document.getElementById('adminOrderModal');if(!m)return;currentOrderId=orderId;document.getElementById('aoTitle').textContent=`Order ${o.orderId}`;document.getElementById('aoSub').textContent=o.createdAt?.toDate?o.createdAt.toDate().toLocaleString():'—';
 const items=(o.items||[]).map(it=>`<div class="order-item"><div><div class="nm">${it.name}</div><div class="vr">${it.size} · ${it.color}</div><div class="qt">Qty: ${it.qty}</div></div><div><b>${money(it.price*it.qty)}</b></div></div>`).join('');
-document.getElementById('aoBody').innerHTML=`<div class="order-detail-block"><h4>Customer & Shipping</h4><div class="row"><b>Name</b><span>${o.fullName||'—'}</span></div><div class="row"><b>Email</b><span>${o.email||'—'}</span></div><div class="row"><b>Phone</b><span>${o.phone||'—'}</span></div><div class="row"><b>Address</b><span>${o.address||'—'}</span></div><div class="row"><b>City</b><span>${o.city||'—'}</span></div><div class="row"><b>District</b><span>${o.district||'—'}</span></div><div class="row"><b>Province</b><span>${o.province||'—'}</span></div></div><div class="order-detail-block"><h4>Items (${o.itemCount||0})</h4><div class="order-items-list">${items}</div></div><div class="order-detail-block"><h4>Payment</h4><div class="row"><b>Subtotal</b><span>${money(o.subtotal)}</span></div><div class="row"><b>Shipping</b><span>${o.shipping===0?'Free':money(o.shipping)}</span></div>${o.loyaltyDiscount?`<div class="row"><b>Loyalty</b><span>−${money(o.loyaltyDiscount)}</span></div>`:''}<div class="row"><b>Total</b><span><b>${money(o.total)}</b></span></div><div class="row"><b>Method</b><span>Cash on Delivery</span></div><div class="row"><b>Status</b><span>${o.status||'pending'}</span></div></div>`;
+document.getElementById('aoBody').innerHTML=`<div class="order-detail-block"><h4>Customer & Shipping</h4><div class="row"><b>Name</b><span>${o.fullName||'—'}</span></div><div class="row"><b>Email</b><span>${o.email||'—'}</span></div><div class="row"><b>Phone</b><span>${o.phone||'—'}</span></div><div class="row"><b>Address</b><span>${o.address||'—'}</span></div><div class="row"><b>City</b><span>${o.city||'—'}</span></div><div class="row"><b>District</b><span>${o.district||'—'}</span></div><div class="row"><b>Province</b><span>${o.province||'—'}</span></div></div><div class="order-detail-block"><h4>Items (${o.itemCount||0})</h4><div class="order-items-list">${items}</div></div><div class="order-detail-block"><h4>Payment</h4><div class="row"><b>Subtotal</b><span>${money(o.subtotal)}</span></div><div class="row"><b>Shipping</b><span>${o.shipping===0?'Free':money(o.shipping)}</span></div><div class="row"><b>Total</b><span><b>${money(o.total)}</b></span></div><div class="row"><b>Method</b><span>Cash on Delivery</span></div><div class="row"><b>Status</b><span>${o.status||'pending'}</span></div></div>`;
 m.querySelectorAll('[data-status]').forEach(b=>b.classList.toggle('active-status',b.dataset.status===(o.status||'pending')));
 m.classList.add('show');}
 async function updateOrderStatus(st){if(!currentOrderId)return;try{await db.collection('orders').doc(currentOrderId).update({status:st,updatedAt:firebase.firestore.FieldValue.serverTimestamp()});toast(`Order marked as ${st}`);loadOrders();setTimeout(()=>showAdminOrder(currentOrderId),400);}catch(e){toast('Could not update status');}}
@@ -259,64 +207,9 @@ function renderUsersTable(list){const t=document.getElementById('usersTbody');if
 t.querySelectorAll('[data-view-user]').forEach(b=>b.addEventListener('click',()=>showAdminUser(b.dataset.viewUser)));}
 function showAdminUser(uid){const u=allUsers.find(x=>(x.uid||x.id)===uid);if(!u)return;const m=document.getElementById('adminUserModal');if(!m)return;const n=`${u.firstName||''} ${u.lastName||''}`.trim()||'—';document.getElementById('auTitle').textContent=n;document.getElementById('auSub').textContent=u.email||'—';
 const uo=allOrders.filter(o=>o.uid===uid);const oh=uo.length?uo.map(o=>`<div class="order-item"><div><div class="nm">${o.orderId} · ${money(o.total)}</div><div class="vr">${o.itemCount||0} items · ${o.city||'—'}</div><div class="qt">${o.createdAt?.toDate?o.createdAt.toDate().toLocaleDateString():'—'}</div></div><div><span class="${o.status==='delivered'?'badge-yes':'badge-info'}">${o.status||'pending'}</span></div></div>`).join(''):`<div style="text-align:center;padding:30px;color:var(--text-muted);font-style:italic;font-size:.9rem">No orders yet</div>`;
-document.getElementById('auBody').innerHTML=`<div class="order-detail-block"><h4>User Information</h4><div class="row"><b>Name</b><span>${n}</span></div><div class="row"><b>Email</b><span>${u.email||'—'}</span></div><div class="row"><b>Phone</b><span>${u.phone||'—'}</span></div><div class="row"><b>Address</b><span>${u.address||'—'}</span></div><div class="row"><b>City</b><span>${u.city||'—'}</span></div><div class="row"><b>District</b><span>${u.district||'—'}</span></div><div class="row"><b>Province</b><span>${u.province||'—'}</span></div><div class="row"><b>Loyalty Points</b><span>${u.loyaltyPoints||0}</span></div><div class="row"><b>Provider</b><span>${u.provider||'password'}</span></div><div class="row"><b>Verified</b><span>${u.emailVerified?'Yes':'No'}</span></div><div class="row"><b>Joined</b><span>${u.createdAt?.toDate?u.createdAt.toDate().toLocaleString():'—'}</span></div></div><div class="order-detail-block"><h4>Orders (${uo.length})</h4><div class="order-items-list">${oh}</div></div>`;
+document.getElementById('auBody').innerHTML=`<div class="order-detail-block"><h4>User Information</h4><div class="row"><b>Name</b><span>${n}</span></div><div class="row"><b>Email</b><span>${u.email||'—'}</span></div><div class="row"><b>Phone</b><span>${u.phone||'—'}</span></div><div class="row"><b>Address</b><span>${u.address||'—'}</span></div><div class="row"><b>City</b><span>${u.city||'—'}</span></div><div class="row"><b>District</b><span>${u.district||'—'}</span></div><div class="row"><b>Province</b><span>${u.province||'—'}</span></div><div class="row"><b>Provider</b><span>${u.provider||'password'}</span></div><div class="row"><b>Verified</b><span>${u.emailVerified?'Yes':'No'}</span></div><div class="row"><b>Joined</b><span>${u.createdAt?.toDate?u.createdAt.toDate().toLocaleString():'—'}</span></div></div><div class="order-detail-block"><h4>Orders (${uo.length})</h4><div class="order-items-list">${oh}</div></div>`;
 m.classList.add('show');}
 function updateAdminStats(){const pc=document.getElementById('productCount');if(pc)pc.textContent=PRODUCTS.length;const oc=document.getElementById('orderCount');if(oc)oc.textContent=allOrders.length;const uc=document.getElementById('userCount');if(uc)uc.textContent=allUsers.length;const rt=document.getElementById('revenueTotal');if(rt)rt.textContent=money(allOrders.reduce((a,o)=>a+(o.total||0),0));}
-
-/* ANALYTICS */
-function renderAnalytics(){
-  const grid=document.getElementById('analyticsGrid');if(!grid)return;
-  const now=new Date();
-  const days=[];
-  for(let i=6;i>=0;i--){const d=new Date(now);d.setDate(now.getDate()-i);days.push(d);}
-  const dailyOrders=days.map(d=>{
-    const dayStr=d.toDateString();
-    const dayOrders=allOrders.filter(o=>o.createdAt?.toDate&&o.createdAt.toDate().toDateString()===dayStr);
-    return{label:d.toLocaleDateString('en-US',{weekday:'short'}),count:dayOrders.length,revenue:dayOrders.reduce((s,o)=>s+(o.total||0),0)};
-  });
-  const maxRev=Math.max(...dailyOrders.map(d=>d.revenue),1);
-  const barsHtml=dailyOrders.map(d=>`<div class="chart-bar" style="height:${Math.max(4,(d.revenue/maxRev)*100)}%" data-value="${money(d.revenue)} · ${d.count} order${d.count!==1?'s':''}"></div>`).join('');
-  const labelsHtml=dailyOrders.map(d=>`<div class="chart-label">${d.label}</div>`).join('');
-
-  // Top products
-  const productSales={};
-  allOrders.forEach(o=>{(o.items||[]).forEach(it=>{if(!productSales[it.name])productSales[it.name]={qty:0,rev:0};productSales[it.name].qty+=it.qty;productSales[it.name].rev+=it.price*it.qty;});});
-  const top=Object.entries(productSales).map(([name,d])=>({name,...d})).sort((a,b)=>b.rev-a.rev).slice(0,5);
-
-  // Top cities
-  const citySales={};
-  allOrders.forEach(o=>{const c=o.city||'Unknown';if(!citySales[c])citySales[c]=0;citySales[c]++;});
-  const topCities=Object.entries(citySales).map(([city,count])=>({city,count})).sort((a,b)=>b.count-a.count).slice(0,5);
-
-  // Average order value
-  const avgOrder=allOrders.length?Math.round(allOrders.reduce((s,o)=>s+(o.total||0),0)/allOrders.length):0;
-
-  grid.innerHTML=`
-    <div class="analytics-card">
-      <h3>Revenue — Last 7 Days</h3>
-      <p class="a-sub">Total: ${money(dailyOrders.reduce((s,d)=>s+d.revenue,0))}</p>
-      <div class="chart-bars">${barsHtml}</div>
-      <div class="chart-labels">${labelsHtml}</div>
-    </div>
-    <div class="analytics-card">
-      <h3>Key Metrics</h3>
-      <p class="a-sub">Overall performance</p>
-      <div class="stat-box" style="width:100%;margin-bottom:12px;border-color:var(--line)"><b>${allOrders.length}</b><span>Total Orders</span></div>
-      <div class="stat-box" style="width:100%;margin-bottom:12px;border-color:var(--line)"><b>${money(avgOrder)}</b><span>Avg Order Value</span></div>
-      <div class="stat-box" style="width:100%;border-color:var(--line)"><b>${allUsers.length}</b><span>Total Users</span></div>
-    </div>
-    <div class="analytics-card">
-      <h3>Top Products</h3>
-      <p class="a-sub">By revenue</p>
-      <div class="top-list">${top.length?top.map((t,i)=>`<div class="top-item"><div class="top-rank">${i+1}</div><div><b>${t.name}</b><span>${t.qty} sold</span></div><div class="top-rev">${money(t.rev)}</div></div>`).join(''):'<div style="text-align:center;color:var(--text-soft);font-style:italic;padding:20px">No sales yet</div>'}</div>
-    </div>
-    <div class="analytics-card">
-      <h3>Top Cities</h3>
-      <p class="a-sub">By order count</p>
-      <div class="top-list">${topCities.length?topCities.map((c,i)=>`<div class="top-item"><div class="top-rank">${i+1}</div><div><b>${c.city}</b><span>orders</span></div><div class="top-rev">${c.count}</div></div>`).join(''):'<div style="text-align:center;color:var(--text-soft);font-style:italic;padding:20px">No data yet</div>'}</div>
-    </div>
-  `;
-}
 
 /* CSV */
 function exportCSV(filename,headers,rows){if(!rows.length)return toast('Nothing to export');const csv=[headers,...rows].map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');const blob=new Blob([csv],{type:'text/csv'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`${filename}-${Date.now()}.csv`;a.click();URL.revokeObjectURL(url);toast('Exported successfully');}
@@ -331,7 +224,7 @@ const page=document.body.dataset.page;
   if(page==='category'){const params=new URLSearchParams(location.search);const catKey=params.get('cat')||Object.keys(CATEGORIES)[0];const cat=getCat(catKey);document.title=`${cat.label} — COOLISM`;const ce=document.getElementById('catEyebrow'),ct=document.getElementById('catTitle'),cs=document.getElementById('catSub');if(ce)ce.textContent='Collection';if(ct)ct.textContent=cat.label;if(cs)cs.textContent=cat.sub||'';currentFilter=catKey;renderProducts(catKey,'featured');
     const s=document.getElementById('sortSelect');if(s)s.addEventListener('change',()=>{currentSort=s.value;renderProducts(currentFilter,currentSort);});}
   if(page==='admin'){const adminList=(document.body.dataset.admin||'').split(',').map(s=>s.trim().toLowerCase()).filter(Boolean);
-    auth.onAuthStateChanged(async user=>{if(!user){const m=document.getElementById('accessMsg');if(m)m.hidden=false;setTimeout(()=>{alert('Access denied. Please sign in with admin account.');window.location.href='index.html';},300);return;}const email=(user.email||'').toLowerCase();if(!adminList.includes(email)){alert('Access denied.');window.location.href='index.html';return;}await loadProducts();await loadOrders();await loadUsers();renderAnalytics();});}
+    auth.onAuthStateChanged(async user=>{if(!user){const m=document.getElementById('accessMsg');if(m)m.hidden=false;setTimeout(()=>{alert('Access denied. Please sign in with admin account.');window.location.href='index.html';},300);return;}const email=(user.email||'').toLowerCase();if(!adminList.includes(email)){alert('Access denied.');window.location.href='index.html';return;}await loadProducts();await loadOrders();await loadUsers();});}
 })();
 
 /* EVENTS */
@@ -387,10 +280,6 @@ document.addEventListener('input',e=>{
   if(e.target.id==='productSearch'){const q=e.target.value.toLowerCase().trim();const f=PRODUCTS.filter(p=>p.name.toLowerCase().includes(q)||(p.sku||'').toLowerCase().includes(q)||(getCat(p.cat).label||'').toLowerCase().includes(q));renderProductsTable(f);}
   if(e.target.id==='orderSearch'){const q=e.target.value.toLowerCase().trim();const f=allOrders.filter(o=>(o.orderId||'').toLowerCase().includes(q)||(o.fullName||'').toLowerCase().includes(q)||(o.phone||'').toLowerCase().includes(q)||(o.city||'').toLowerCase().includes(q));renderOrdersTable(f);}
   if(e.target.id==='userSearch'){const q=e.target.value.toLowerCase().trim();const f=allUsers.filter(u=>(u.email||'').toLowerCase().includes(q)||(u.firstName||'').toLowerCase().includes(q)||(u.lastName||'').toLowerCase().includes(q)||(u.phone||'').toLowerCase().includes(q));renderUsersTable(f);}
-  if(e.target.id==='co-city'||e.target.id==='co-district'||e.target.id==='co-province')updateCheckoutSummary();
-});
-document.addEventListener('change',e=>{
-  if(e.target.id==='useLoyalty'){useLoyaltyPoints=e.target.checked;updateCheckoutSummary();}
 });
 
 document.addEventListener('click',e=>{const s=e.target.closest('#starPicker span');if(s){selectedStar=Number(s.dataset.star);document.querySelectorAll('#starPicker span').forEach(sp=>sp.classList.toggle('active',Number(sp.dataset.star)<=selectedStar));}});
@@ -399,27 +288,29 @@ const loginForm=document.getElementById('loginForm');
 if(loginForm)loginForm.addEventListener('submit',async e=>{e.preventDefault();const emailInput=document.getElementById('li-email'),passInput=document.getElementById('li-pass');const email=emailInput.value.trim(),pass=passInput.value;const btn=document.getElementById('loginBtn');const ok=[setErr(emailInput,!isEmail(email)),setErr(passInput,pass.length<6)].every(Boolean);if(!ok)return;btn.classList.add('loading');btn.textContent='Signing in...';try{const cred=await auth.signInWithEmailAndPassword(email,pass);const user=cred.user;if(user.providerData[0].providerId==='password'&&!user.emailVerified){await auth.signOut();toast('Please verify your email first.');btn.classList.remove('loading');btn.textContent='Sign In';return;}await saveUserToFirestore(user);closeAuth();toast(`Welcome back, ${user.email}`);loginForm.reset();btn.classList.remove('loading');btn.textContent='Sign In';try{const pending=JSON.parse(localStorage.getItem('coolism_pending')||'null');if(pending&&cart.length)setTimeout(()=>placeOrder(user,pending),500);}catch(er){}}catch(err){btn.classList.remove('loading');btn.textContent='Sign In';handleAuthError(err);}});
 const signupForm=document.getElementById('signupForm');
 if(signupForm)signupForm.addEventListener('submit',async e=>{e.preventDefault();const emailInput=document.getElementById('su-email'),passInput=document.getElementById('su-pass'),pass2Input=document.getElementById('su-pass2');const terms=document.getElementById('su-terms'),btn=document.getElementById('signupBtn');const email=emailInput.value.trim(),pass=passInput.value,pass2=pass2Input.value;const ok=[setErr(emailInput,!isEmail(email)),setErr(passInput,pass.length<6),setErr(pass2Input,pass!==pass2)].every(Boolean);if(!ok)return;if(terms&&!terms.checked)return toast('Please accept the Terms');btn.classList.add('loading');btn.textContent='Creating...';try{const cred=await auth.createUserWithEmailAndPassword(email,pass);const user=cred.user;await saveUserToFirestore(user);await user.sendEmailVerification();await auth.signOut();closeAuth();toast('Verification email sent! Check your inbox.');signupForm.reset();btn.classList.remove('loading');btn.textContent='Create Account';switchTab('login');}catch(err){btn.classList.remove('loading');btn.textContent='Create Account';handleAuthError(err);}});
-document.querySelectorAll('[data-social="Google"]').forEach(btn=>{btn.addEventListener('click',async()=>{const provider=new firebase.auth.GoogleAuthProvider();provider.setCustomParameters({prompt:'select_account'});try{const result=await auth.signInWithPopup(provider);await saveUserToFirestore(result.user);closeAuth();toast(`Signed in as ${result.user.displayName||result.user.email}`);try{const pending=JSON.parse(localStorage.getItem('coolism_pending')||'null');if(pending&&cart.length)setTimeout(()=>placeOrder(result.user,pending),500);}catch(er){}}catch(err){if(err.code==='auth/popup-closed-by-user')return;if(err.code==='auth/popup-blocked')return toast('Popup blocked.');handleAuthError(err);}});});
+document.querySelectorAll('[data-social="Google"]').forEach(btn=>{btn.addEventListener('click',async()=>{const provider=new firebase.auth.GoogleAuthProvider();provider.setCustomParameters({prompt:'select_account'});try{const result=await auth.signInWithPopup(provider);await saveUserToFirestore(result.user);closeAuth();toast(`Signed in as ${result.user.displayName||result.user.email}`);try{const pending=JSON.parse(localStorage.getItem('coolism_pending')||'null');if(pending&&cart.length)setTimeout(()=>placeOrder(result.user,pending),500);}catch(er){}}catch(err){if(err.code==='auth/popup-closed-by-user')return;if(err.code==='auth/popup-blocked')return toast('Popup blocked. Allow popups.');handleAuthError(err);}});});
 document.querySelectorAll('[data-social="Apple"]').forEach(btn=>btn.addEventListener('click',()=>toast('Apple sign-in coming soon')));
 const forgotBtn=document.getElementById('forgotPass');
 if(forgotBtn)forgotBtn.addEventListener('click',async e=>{e.preventDefault();const email=document.getElementById('li-email').value.trim();if(!isEmail(email))return toast('Enter your email above first.');try{await auth.sendPasswordResetEmail(email);toast('Password reset email sent.');}catch(err){handleAuthError(err);}});
 
 const checkoutForm=document.getElementById('checkoutForm');
 if(checkoutForm)checkoutForm.addEventListener('submit',async e=>{e.preventDefault();const nameEl=document.getElementById('co-name'),phoneEl=document.getElementById('co-phone'),cityEl=document.getElementById('co-city'),distEl=document.getElementById('co-district'),provEl=document.getElementById('co-province'),addrEl=document.getElementById('co-address'),btn=document.getElementById('placeOrderBtn');const ok=[setErr(nameEl,nameEl.value.trim().length<2),setErr(phoneEl,!isPhoneOk(phoneEl.value)),setErr(cityEl,cityEl.value.trim().length<2),setErr(distEl,distEl.value.trim().length<2),setErr(provEl,!provEl.value),setErr(addrEl,addrEl.value.trim().length<5)].every(Boolean);if(!ok)return toast('Please fill all fields');const formData={fullName:nameEl.value.trim(),phone:phoneEl.value.trim(),address:addrEl.value.trim(),city:cityEl.value.trim(),district:distEl.value.trim(),province:provEl.value};if(!auth.currentUser){try{localStorage.setItem('coolism_pending',JSON.stringify(formData));}catch(er){}closeCheckout();openAuth('signup');toast('Sign in to place your order');return;}btn.classList.add('loading');btn.textContent='Placing...';await placeOrder(auth.currentUser,formData);btn.classList.remove('loading');btn.textContent='Place Order — Cash on Delivery';if(checkoutForm)checkoutForm.reset();});
+
 const editForm=document.getElementById('editForm');
 if(editForm)editForm.addEventListener('submit',async e=>{e.preventDefault();const user=auth.currentUser;if(!user)return;const data={firstName:document.getElementById('ed-first').value.trim(),lastName:document.getElementById('ed-last').value.trim(),phone:document.getElementById('ed-phone').value.trim(),address:document.getElementById('ed-address').value.trim(),city:document.getElementById('ed-city').value.trim(),district:document.getElementById('ed-district').value.trim(),province:document.getElementById('ed-province').value};try{await db.collection('users').doc(user.uid).set(data,{merge:true});await user.updateProfile({displayName:`${data.firstName} ${data.lastName}`.trim()});document.getElementById('editModal').classList.remove('show');toast('Profile updated');loadProfile(user);}catch(err){toast('Could not save');}});
 if(document.getElementById('editProfileBtn'))document.getElementById('editProfileBtn').addEventListener('click',()=>document.getElementById('editModal').classList.add('show'));
 if(document.getElementById('editClose'))document.getElementById('editClose').addEventListener('click',()=>document.getElementById('editModal').classList.remove('show'));
+
 const productForm=document.getElementById('productForm');
 if(productForm)productForm.addEventListener('submit',saveProduct);
 const reviewForm=document.getElementById('reviewForm');
 if(reviewForm)reviewForm.addEventListener('submit',async e=>{e.preventDefault();const user=auth.currentUser;if(!user)return toast('Please sign in to post a review');if(!selectedStar)return toast('Please pick a star rating');const text=document.getElementById('reviewText').value.trim();if(!text)return toast('Please write a short review');try{await db.collection('reviews').add({productId:currentReviewProduct,userId:user.uid,userName:user.displayName||user.email.split('@')[0],rating:selectedStar,text,createdAt:firebase.firestore.FieldValue.serverTimestamp()});toast('Review posted!');document.getElementById('reviewText').value='';selectedStar=0;document.querySelectorAll('#starPicker span').forEach(s=>s.classList.remove('active'));loadReviews(currentReviewProduct);updateDetailRating(currentReviewProduct);}catch(err){toast('Could not post review');}});
-document.querySelectorAll('.admin-tab').forEach(t=>{t.addEventListener('click',()=>{document.querySelectorAll('.admin-tab').forEach(x=>x.classList.remove('active'));t.classList.add('active');const w=t.dataset.tab;['products','orders','users','analytics'].forEach(p=>{const el=document.getElementById('panel-'+p);if(el)el.hidden=w!==p;});if(w==='analytics')renderAnalytics();});});
+document.querySelectorAll('.admin-tab').forEach(t=>{t.addEventListener('click',()=>{document.querySelectorAll('.admin-tab').forEach(x=>x.classList.remove('active'));t.classList.add('active');const w=t.dataset.tab;['products','orders','users'].forEach(p=>{const el=document.getElementById('panel-'+p);if(el)el.hidden=w!==p;});});});
 if(document.getElementById('refreshProducts'))document.getElementById('refreshProducts').addEventListener('click',loadProducts);
 if(document.getElementById('refreshOrders'))document.getElementById('refreshOrders').addEventListener('click',loadOrders);
 if(document.getElementById('refreshUsers'))document.getElementById('refreshUsers').addEventListener('click',loadUsers);
-if(document.getElementById('exportOrders'))document.getElementById('exportOrders').addEventListener('click',()=>{const h=['Order ID','Date','Customer','Email','Phone','Address','City','District','Province','Items','Subtotal','Shipping','Loyalty Disc','Total','Status'];const r=allOrders.map(o=>[o.orderId||'',o.createdAt?.toDate?o.createdAt.toDate().toISOString():'',o.fullName||'',o.email||'',o.phone||'',o.address||'',o.city||'',o.district||'',o.province||'',o.itemCount||0,o.subtotal||0,o.shipping||0,o.loyaltyDiscount||0,o.total||0,o.status||'pending']);exportCSV('coolism-orders',h,r);});
-if(document.getElementById('exportUsers'))document.getElementById('exportUsers').addEventListener('click',()=>{const h=['UID','Email','Name','Phone','City','District','Province','Provider','Verified','Loyalty Points','Joined'];const r=allUsers.map(u=>[u.uid||u.id,u.email||'',`${u.firstName||''} ${u.lastName||''}`.trim(),u.phone||'',u.city||'',u.district||'',u.province||'',u.provider||'',u.emailVerified?'Yes':'No',u.loyaltyPoints||0,u.createdAt?.toDate?u.createdAt.toDate().toISOString():'']);exportCSV('coolism-users',h,r);});
+if(document.getElementById('exportOrders'))document.getElementById('exportOrders').addEventListener('click',()=>{const h=['Order ID','Date','Customer','Email','Phone','Address','City','District','Province','Items','Subtotal','Shipping','Total','Status'];const r=allOrders.map(o=>[o.orderId||'',o.createdAt?.toDate?o.createdAt.toDate().toISOString():'',o.fullName||'',o.email||'',o.phone||'',o.address||'',o.city||'',o.district||'',o.province||'',o.itemCount||0,o.subtotal||0,o.shipping||0,o.total||0,o.status||'pending']);exportCSV('coolism-orders',h,r);});
+if(document.getElementById('exportUsers'))document.getElementById('exportUsers').addEventListener('click',()=>{const h=['UID','Email','Name','Phone','City','District','Province','Provider','Verified','Joined'];const r=allUsers.map(u=>[u.uid||u.id,u.email||'',`${u.firstName||''} ${u.lastName||''}`.trim(),u.phone||'',u.city||'',u.district||'',u.province||'',u.provider||'',u.emailVerified?'Yes':'No',u.createdAt?.toDate?u.createdAt.toDate().toISOString():'']);exportCSV('coolism-users',h,r);});
 const newsForm=document.getElementById('newsForm');
 if(newsForm)newsForm.addEventListener('submit',e=>{e.preventDefault();const input=e.target.querySelector('input');if(!isEmail(input.value))return toast('Please enter a valid email');toast("You're on the list!");input.value='';});
 const navWrap=document.getElementById('navWrap');
