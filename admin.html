@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -16,10 +16,6 @@
     <a href="index.html" class="logo"><span class="dot"></span>COOLISM</a>
     <nav class="nav-links"><a href="index.html">Home</a><a href="#" class="active">Dashboard</a></nav>
     <div class="nav-actions">
-      <button class="icon-btn theme-toggle" id="themeToggle" aria-label="Toggle theme">
-        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display:none"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
-      </button>
       <button class="btn-ghost" id="accountBtn">Login</button>
     </div>
   </div>
@@ -44,10 +40,8 @@
       <button class="admin-tab active" data-tab="products">Products</button>
       <button class="admin-tab" data-tab="orders">Orders</button>
       <button class="admin-tab" data-tab="users">User Details</button>
-      <button class="admin-tab" data-tab="analytics">Analytics</button>
     </div>
 
-    <!-- PRODUCTS -->
     <div class="admin-panel" id="panel-products">
       <div class="table-toolbar">
         <input type="text" id="productSearch" placeholder="Search products..." />
@@ -56,13 +50,12 @@
       </div>
       <div class="table-wrap">
         <table class="users-table">
-          <thead><tr><th>#</th><th>Image</th><th>Name</th><th>Category</th><th>Price</th><th>SKU</th><th>Stock</th><th>Status</th><th>Actions</th></tr></thead>
-          <tbody id="productsTbody"><tr><td colspan="9" class="table-empty">Loading products…</td></tr></tbody>
+          <thead><tr><th>#</th><th>Image</th><th>Name</th><th>Category</th><th>Price</th><th>SKU</th><th>Stock</th><th>Actions</th></tr></thead>
+          <tbody id="productsTbody"><tr><td colspan="8" class="table-empty">Loading products…</td></tr></tbody>
         </table>
       </div>
     </div>
 
-    <!-- ORDERS -->
     <div class="admin-panel" id="panel-orders" hidden>
       <div class="table-toolbar">
         <input type="text" id="orderSearch" placeholder="Search orders..." />
@@ -77,7 +70,6 @@
       </div>
     </div>
 
-    <!-- USERS -->
     <div class="admin-panel" id="panel-users" hidden>
       <div class="table-toolbar">
         <input type="text" id="userSearch" placeholder="Search users..." />
@@ -92,16 +84,10 @@
       </div>
     </div>
 
-    <!-- ANALYTICS -->
-    <div class="admin-panel" id="panel-analytics" hidden>
-      <div class="analytics-grid" id="analyticsGrid"></div>
-    </div>
-
     <div id="accessMsg" class="access-msg" hidden>⚠️ Admin access only. <a href="index.html">Go to homepage</a></div>
   </div>
 </section>
 
-<!-- PRODUCT MODAL -->
 <div class="modal-backdrop" id="productModal">
   <div class="product-modal">
     <div class="modal-panel">
@@ -144,7 +130,7 @@
               <input type="text" id="p-img3" placeholder="product-back.jpg" class="img-filename" data-slot="2" />
             </div>
           </div>
-          <p class="image-hint">💡 Upload these files to your GitHub <code>images/</code> folder. Leave empty if not needed.</p>
+          <p class="image-hint">💡 Upload these files to your GitHub <code>images/</code> folder.</p>
         </div>
 
         <div class="form-section">
@@ -169,7 +155,7 @@
           <p class="form-section-title">Inventory</p>
           <div class="row-2">
             <div class="field"><label>Stock Quantity</label><input id="p-stock" type="number" min="0" placeholder="50" value="50" /></div>
-            <div class="field"><label>Low Stock Alert (below this)</label><input id="p-lowstock" type="number" min="0" placeholder="5" value="5" /></div>
+            <div class="field"><label>Low Stock Alert</label><input id="p-lowstock" type="number" min="0" placeholder="5" value="5" /></div>
           </div>
           <label class="stock-toggle"><input type="checkbox" id="p-instock" checked /><span>Available for purchase</span></label>
         </div>
@@ -183,7 +169,6 @@
   </div>
 </div>
 
-<!-- ORDER MODAL -->
 <div class="modal-backdrop" id="adminOrderModal">
   <div class="checkout-modal">
     <div class="modal-panel" style="grid-column:1/-1">
@@ -205,7 +190,6 @@
   </div>
 </div>
 
-<!-- USER MODAL -->
 <div class="modal-backdrop" id="adminUserModal">
   <div class="checkout-modal">
     <div class="modal-panel" style="grid-column:1/-1">
